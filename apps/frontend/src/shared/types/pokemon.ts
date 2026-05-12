@@ -18,3 +18,10 @@ export interface PokemonDetails {
   };
   types: string[];
 }
+
+export interface Pokemon {
+  id: number;
+  name: string;
+  weight: number;
+  _id: string;
+}
