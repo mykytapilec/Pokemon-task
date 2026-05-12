@@ -8,7 +8,11 @@ import {
 export const CollectionPage = () => {
   const { id } = useParams<{ id: string }>();
 
-  const { data: collection, isLoading } = useCollection(id!);
+  const {
+    data: collection,
+    isLoading,
+  } = useCollection(id ?? '');
+
   const exportMutation = useExportCollection();
 
   const handleExport = async () => {

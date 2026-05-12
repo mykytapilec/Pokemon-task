@@ -2,7 +2,10 @@ import { useMemo, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 
 import { usePokemonList } from '../../shared/hooks/use-pokemon';
-import { useCreateCollection, useImportCollection } from '../../shared/hooks/use-collections';
+import {
+  useCreateCollection,
+  useImportCollection,
+} from '../../shared/hooks/use-collections';
 
 import type { PokemonDetails } from '../../shared/types/pokemon';
 import { PokemonCard } from '../../features/pokemon-catalog/pokemon-card';
@@ -10,7 +13,10 @@ import { PokemonCard } from '../../features/pokemon-catalog/pokemon-card';
 export const CreateCollectionPage = () => {
   const navigate = useNavigate();
 
-  const { data: pokemons = [], isLoading } = usePokemonList();
+  const {
+    data: pokemons = [],
+    isLoading,
+  } = usePokemonList();
 
   const createMutation = useCreateCollection();
   const importMutation = useImportCollection();
@@ -20,7 +26,7 @@ export const CreateCollectionPage = () => {
   const [name, setName] = useState('');
 
   const totalWeight = useMemo(() => {
-    return selected.reduce((sum, pokemon) => sum + pokemon.weight, 0);
+    return selected.reduce((sum, p) => sum + p.weight, 0);
   }, [selected]);
 
   const uniqueSpeciesCount = useMemo(() => {
@@ -48,10 +54,10 @@ export const CreateCollectionPage = () => {
 
     await createMutation.mutateAsync({
       name,
-      pokemons: selected.map((pokemon) => ({
-        id: pokemon.id,
-        name: pokemon.name,
-        weight: pokemon.weight,
+      pokemons: selected.map((p) => ({
+        id: p.id,
+        name: p.name,
+        weight: p.weight,
       })),
     });
 

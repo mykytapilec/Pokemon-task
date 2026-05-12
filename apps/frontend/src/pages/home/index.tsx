@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { CollectionCard } from '../../components/collection-card';
 import { ConfirmModal } from '../../components/confirm-modal';
+import { Skeleton } from '../../components/skeleton';
 
 import {
   useCollections,
@@ -11,7 +12,7 @@ import {
 } from '../../shared/hooks/use-collections';
 
 export const HomePage = () => {
-  const { data: collections = [], isLoading } = useCollections();
+  const { data: collections = [], isLoading, isError } = useCollections();
 
   const deleteMutation = useDeleteCollection();
   const importMutation = useImportCollection();
@@ -55,7 +56,19 @@ export const HomePage = () => {
         </button>
       </div>
 
-      {isLoading && <p>Loading collections...</p>}
+      {isLoading && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <Skeleton height={80} />
+          <Skeleton height={80} />
+          <Skeleton height={80} />
+        </div>
+      )}
+
+      {isError && <p style={{ color: 'red' }}>Failed to load collections</p>}
+
+      {!isLoading && collections.length === 0 && (
+        <p>No collections yet. Create your first one.</p>
+      )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {collections.map((collection) => (

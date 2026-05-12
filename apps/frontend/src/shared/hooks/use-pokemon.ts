@@ -14,10 +14,17 @@ export const usePokemonList = (limit = 20, offset = 0) => {
           return {
             id: res.id,
             name: res.name,
-            weight: res.weight,
-            height: res.height,
-            sprites: res.sprites,
-            types: res.types.map((t: any) => t.type?.name ?? t),
+            weight: res.weight ?? 0,
+            height: res.height ?? 0,
+            sprites: {
+              front_default:
+                res.sprites?.front_default ??
+                `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${res.id}.png`,
+            },
+            types:
+              Array.isArray(res.types)
+                ? res.types.map((t: any) => t.type?.name ?? t)
+                : [],
           };
         }),
       );
