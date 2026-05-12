@@ -2,36 +2,30 @@ import { useMemo, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 
 import { usePokemonList } from '../../shared/hooks/use-pokemon';
-import {
-  useCreateCollection,
-  useImportCollection,
-} from '../../shared/hooks/use-collections';
+import { useCreateCollection } from '../../shared/hooks/use-collections';
 
 import type { PokemonDetails } from '../../shared/types/pokemon';
 import { PokemonCard } from '../../features/pokemon-catalog/pokemon-card';
+import { PokemonCardSkeleton } from '../../components/pokemon-card-skeleton';
 
 export const CreateCollectionPage = () => {
   const navigate = useNavigate();
 
-  const {
-    data: pokemons = [],
-    isLoading,
-  } = usePokemonList();
-
+  const { data: pokemons = [], isLoading } = usePokemonList();
   const createMutation = useCreateCollection();
-  const importMutation = useImportCollection();
 
   const [selected, setSelected] = useState<PokemonDetails[]>([]);
-  const [file, setFile] = useState<File | null>(null);
   const [name, setName] = useState('');
 
-  const totalWeight = useMemo(() => {
-    return selected.reduce((sum, p) => sum + p.weight, 0);
-  }, [selected]);
+  const totalWeight = useMemo(
+    () => selected.reduce((sum, p) => sum + p.weight, 0),
+    [selected],
+  );
 
-  const uniqueSpeciesCount = useMemo(() => {
-    return new Set(selected.map((p) => p.name)).size;
-  }, [selected]);
+  const uniqueSpeciesCount = useMemo(
+    () => new Set(selected.map((p) => p.name)).size,
+    [selected],
+  );
 
   const isValid =
     totalWeight <= 1300 &&
@@ -64,14 +58,6 @@ export const CreateCollectionPage = () => {
     navigate('/');
   };
 
-  const handleImport = async () => {
-    if (!file) return;
-
-    await importMutation.mutateAsync(file);
-
-    navigate('/');
-  };
-
   return (
     <div style={{ padding: '24px' }}>
       <Link to="/">← Back to Home</Link>
@@ -93,35 +79,24 @@ export const CreateCollectionPage = () => {
       <p>Total Weight: {totalWeight}</p>
       <p>Unique Species: {uniqueSpeciesCount}</p>
 
-      <div style={{ marginBottom: '16px' }}>
-        <input
-          type="file"
-          accept="application/json"
-          onChange={(e) => {
-            if (e.target.files?.[0]) {
-              setFile(e.target.files[0]);
-            }
-          }}
-        />
-
-        <button
-          onClick={() => void handleImport()}
-          style={{ marginLeft: '8px' }}
-        >
-          Import Collection
-        </button>
-      </div>
-
-      {isLoading && <p>Loading Pokémon...</p>}
-
-      {totalWeight > 1300 && (
-        <p style={{ color: 'red' }}>Weight limit exceeded</p>
+      {!isValid && (
+        <p style={{ color: '#999' }}>
+          Fill name + select 3+ Pokémon under weight limit
+        </p>
       )}
 
-      {uniqueSpeciesCount < 3 && (
-        <p style={{ color: 'red' }}>
-          At least 3 different species required
-        </p>
+      {isLoading && (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gap: '16px',
+          }}
+        >
+          {Array.from({ length: 8 }).map((_, i) => (
+            <PokemonCardSkeleton key={i} />
+          ))}
+        </div>
       )}
 
       <button
