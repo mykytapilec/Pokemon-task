@@ -57,14 +57,15 @@ export const CollectionPage = () => {
 
   return (
     <div style={{ padding: '24px' }}>
+      <div style={{ marginBottom: '12px' }}>
+        <Link to="/" style={{ textDecoration: 'none' }}>
+          ← Back to Home
+        </Link>
+      </div>
+
       <h1>{collection.name}</h1>
 
       <div style={{ marginBottom: '16px' }}>
-        <Link to="/" style={{ textDecoration: 'none' }}>
-          <button style={{ padding: '8px 12px', cursor: 'pointer' }}>
-            ← Back to Home
-          </button>
-        </Link>
 
         <button
           onClick={() => void handleExport()}
