@@ -8,11 +8,18 @@ export interface PokemonListResponseDto {
   results: PokemonListItemDto[];
 }
 
-export interface PokemonDetailsDto {
-  id: number;
-  name: string;
-  weight: number;
-  height: number;
-  sprites: Record<string, any>;
-  types: string[];
+export class PokemonDetailsDto {
+  id!: number;
+
+  name!: string;
+
+  weight!: number;
+
+  height!: number;
+
+  sprites!: {
+    front_default: string;
+  };
+
+  types!: string[];
 }

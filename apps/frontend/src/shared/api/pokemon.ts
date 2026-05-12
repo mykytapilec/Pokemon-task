@@ -1,9 +1,30 @@
 import { api } from './client';
 
-export const pokemonApi = {
-  getAll: (limit = 20, offset = 0) =>
-    api.get(`/pokemon?limit=${limit}&offset=${offset}`),
+import type {
+  PokemonDetails,
+  PokemonListResponse,
+} from '../types/pokemon';
 
-  getByName: (name: string) =>
-    api.get(`/pokemon/${name}`),
+export const pokemonApi = {
+  getAll: async (
+    limit = 20,
+    offset = 0,
+  ): Promise<PokemonListResponse> => {
+    const response = await api.get<PokemonListResponse>(
+      `/pokemon?limit=${limit}&offset=${offset}`,
+    );
+
+    return response.data;
+  },
+
+  getByName: async (
+    name: string,
+  ): Promise<PokemonDetails> => {
+    const response =
+      await api.get<PokemonDetails>(
+        `/pokemon/${name}`,
+      );
+
+    return response.data;
+  },
 };
