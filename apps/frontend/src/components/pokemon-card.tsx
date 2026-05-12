@@ -1,4 +1,4 @@
-import type { PokemonDetails } from '../../shared/types/pokemon';
+import type { PokemonDetails } from '../shared/types/pokemon';
 
 interface Props {
   pokemon: PokemonDetails;
