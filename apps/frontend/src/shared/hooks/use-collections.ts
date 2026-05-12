@@ -5,6 +5,12 @@ import {
 } from '@tanstack/react-query';
 
 import { collectionsApi } from '../api/collections';
+import type { Collection } from '../types/collection';
+import type { Pokemon } from '../types/pokemon';
+
+/* =========================
+   BASE QUERIES
+========================= */
 
 export const useCollections = () => {
   return useQuery({
@@ -20,6 +26,10 @@ export const useCollection = (id: string) => {
     enabled: !!id,
   });
 };
+
+/* =========================
+   MUTATIONS
+========================= */
 
 export const useCreateCollection = () => {
   const queryClient = useQueryClient();
@@ -38,32 +48,44 @@ export const useUpdateCollection = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: {
+    mutationFn: ({
+      id,
+      data,
+    }: {
       id: string;
       data: {
         name?: string;
-        pokemons?: any[];
+        pokemons?: Pokemon[];
       };
     }) => collectionsApi.update(id, data),
 
     onMutate: async ({ id, data }) => {
-      await queryClient.cancelQueries({ queryKey: ['collection', id] });
-
-      const previous = queryClient.getQueryData(['collection', id]);
-
-      queryClient.setQueryData(['collection', id], (old: any) => {
-        if (!old) return old;
-
-        return {
-          ...old,
-          ...data,
-        };
+      await queryClient.cancelQueries({
+        queryKey: ['collection', id],
       });
+
+      const previous =
+        queryClient.getQueryData<Collection>([
+          'collection',
+          id,
+        ]);
+
+      queryClient.setQueryData<Collection>(
+        ['collection', id],
+        (old) => {
+          if (!old) return old;
+
+          return {
+            ...old,
+            ...data,
+          };
+        },
+      );
 
       return { previous };
     },
 
-    onError: (_err, variables, context: any) => {
+    onError: (_err, variables, context) => {
       if (context?.previous) {
         queryClient.setQueryData(
           ['collection', variables.id],
@@ -116,9 +138,9 @@ export const useExportCollection = () => {
   });
 };
 
-/* ================================
-   🧩 COLLECTION ACTION HELPERS
-   ================================ */
+/* =========================
+   HELPERS (typed version)
+========================= */
 
 export const useAddPokemonToCollection = () => {
   const update = useUpdateCollection();
@@ -130,8 +152,8 @@ export const useAddPokemonToCollection = () => {
       currentPokemons,
     }: {
       id: string;
-      pokemon: any;
-      currentPokemons: any[];
+      pokemon: Pokemon;
+      currentPokemons: Pokemon[];
     }) => {
       update.mutate({
         id,
@@ -154,7 +176,7 @@ export const useRemovePokemonFromCollection = () => {
     }: {
       id: string;
       pokemonId: number;
-      currentPokemons: any[];
+      currentPokemons: Pokemon[];
     }) => {
       update.mutate({
         id,
