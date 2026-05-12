@@ -1,91 +1,96 @@
-import {
-  useEffect,
-  useState,
-} from 'react';
-
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { collectionsApi } from '../../shared/api/collections';
-
 import type { Collection } from '../../shared/types/collection';
 
+import { CollectionCard } from '../../components/collection-card';
+import { ConfirmModal } from '../../components/confirm-modal';
+
 export const HomePage = () => {
-  const [collections, setCollections] =
-    useState<Collection[]>([]);
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+
+  const [file, setFile] = useState<File | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const loadCollections = async () => {
+    const data = await collectionsApi.getAll();
+    setCollections(data);
+  };
 
   useEffect(() => {
-    const load = async () => {
-      const data =
-        await collectionsApi.getAll();
-
-      setCollections(data);
-    };
-
-    void load();
+    void loadCollections();
   }, []);
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+
+    try {
+      setLoadingId(deleteId);
+      await collectionsApi.remove(deleteId);
+      await loadCollections();
+    } finally {
+      setLoadingId(null);
+      setDeleteId(null);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!file) return;
+
+    try {
+      await collectionsApi.importFile(file);
+      await loadCollections();
+      setFile(null);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   return (
     <div style={{ padding: '24px' }}>
       <h1>Pokemon Collections</h1>
 
-      <div style={{ marginBottom: '16px' }}>
-        <Link to="/create">
-          Create New Collection
-        </Link>
+      {/* CREATE + IMPORT BAR */}
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+        <Link to="/create">Create New Collection</Link>
+
+        <input
+          type="file"
+          accept="application/json"
+          onChange={(e) => {
+            if (e.target.files?.[0]) {
+              setFile(e.target.files[0]);
+            }
+          }}
+        />
+
+        <button onClick={handleImport} disabled={!file}>
+          Import Collection
+        </button>
       </div>
 
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-        }}
-      >
+      {/* LIST */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {collections.map((collection) => (
-          <Link
+          <CollectionCard
             key={collection._id}
-            to={`/collections/${collection._id}`}
-            style={{
-              textDecoration: 'none',
-              color: 'inherit',
-            }}
-          >
-            <div
-              style={{
-                border:
-                  '1px solid #ccc',
-                borderRadius: '8px',
-                padding: '16px',
-                cursor: 'pointer',
-                transition:
-                  'all 0.2s ease',
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.background =
-                  '#f5f5f5';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.background =
-                  'white';
-              }}
-            >
-              <h3 style={{ margin: 0 }}>
-                {collection.name}
-              </h3>
-
-              <p style={{ margin: '8px 0 0' }}>
-                Pokemons:{' '}
-                {collection.pokemons.length}
-              </p>
-
-              <p style={{ margin: 0 }}>
-                Total Weight:{' '}
-                {collection.totalWeight}
-              </p>
-            </div>
-          </Link>
+            collection={collection}
+            loading={loadingId === collection._id}
+            onDelete={(id) => setDeleteId(id)}
+          />
         ))}
       </div>
+
+      {/* CONFIRM MODAL */}
+      <ConfirmModal
+        open={!!deleteId}
+        title="Delete collection?"
+        description="This will permanently remove the collection."
+        onCancel={() => setDeleteId(null)}
+        onConfirm={() => void handleDelete()}
+      />
     </div>
   );
 };

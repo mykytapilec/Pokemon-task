@@ -4,7 +4,7 @@ import {
   useState,
 } from 'react';
 
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { pokemonApi } from '../../shared/api/pokemon';
 import { collectionsApi } from '../../shared/api/collections';
@@ -124,6 +124,19 @@ export const CreateCollectionPage = () => {
   return (
     <div style={{ padding: '24px' }}>
       <h1>Create Collection</h1>
+
+      <div style={{ marginBottom: '16px' }}>
+        <Link to="/" style={{ textDecoration: 'none' }}>
+          <button
+            style={{
+              padding: '8px 12px',
+              cursor: 'pointer',
+            }}
+          >
+            ← Back to Home
+          </button>
+        </Link>
+      </div>
 
       <input
         type="text"
