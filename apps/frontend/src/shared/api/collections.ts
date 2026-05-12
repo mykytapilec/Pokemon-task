@@ -7,31 +7,31 @@ import type {
 
 export const collectionsApi = {
   getAll: async (): Promise<Collection[]> => {
-    const response =
-      await api.get<Collection[]>('/collections');
-
+    const response = await api.get<Collection[]>('/collections');
     return response.data;
   },
 
-  getOne: async (
+  getOne: async (id: string): Promise<Collection> => {
+    const response = await api.get<Collection>(`/collections/${id}`);
+    return response.data;
+  },
+
+  create: async (data: CreateCollectionPayload): Promise<Collection> => {
+    const response = await api.post<Collection>('/collections', data);
+    return response.data;
+  },
+
+  update: async (
     id: string,
-  ): Promise<Collection> => {
-    const response =
-      await api.get<Collection>(
-        `/collections/${id}`,
-      );
-
-    return response.data;
-  },
-
-  create: async (
-    data: CreateCollectionPayload,
-  ): Promise<Collection> => {
-    const response =
-      await api.post<Collection>(
-        '/collections',
-        data,
-      );
+    data: {
+      name?: string;
+      pokemons?: any[];
+    },
+  ) => {
+    const response = await api.patch(
+      `/collections/${id}`,
+      data,
+    );
 
     return response.data;
   },
@@ -42,21 +42,14 @@ export const collectionsApi = {
 
   importFile: async (file: File) => {
     const formData = new FormData();
-
     formData.append('file', file);
 
-    return api.post(
-      '/collections/import',
-      formData,
-    );
+    return api.post('/collections/import', formData);
   },
 
   exportFile: async (id: string) => {
-    return api.get(
-      `/collections/${id}/export`,
-      {
-        responseType: 'blob',
-      },
-    );
+    return api.get(`/collections/${id}/export`, {
+      responseType: 'blob',
+    });
   },
 };
