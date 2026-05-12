@@ -5,7 +5,7 @@ import { usePokemonList } from '../../shared/hooks/use-pokemon';
 import { useCreateCollection } from '../../shared/hooks/use-collections';
 
 import type { PokemonDetails } from '../../shared/types/pokemon';
-import { PokemonCard } from '../../features/pokemon-catalog/pokemon-card';
+import { PokemonCard } from '../../components/pokemon-card';
 import { PokemonCardSkeleton } from '../../components/pokemon-card-skeleton';
 
 export const CreateCollectionPage = () => {

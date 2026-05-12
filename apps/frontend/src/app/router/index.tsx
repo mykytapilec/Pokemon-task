@@ -3,7 +3,6 @@ import { createBrowserRouter } from 'react-router-dom';
 import { HomePage } from '../../pages/home';
 import { CreateCollectionPage } from '../../pages/create-collection';
 import { CollectionPage } from '../../pages/collection-details';
-// import { CollectionPage } from '../pages/collection-details';
 
 export const router = createBrowserRouter([
   {
