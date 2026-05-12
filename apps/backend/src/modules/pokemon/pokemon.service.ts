@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
+
 import { PokemonClient } from './client/pokemon.client';
+
 import { PokemonDetailsDto, PokemonListResponseDto } from './dto/pokemon.dto';
 
 @Injectable()
@@ -29,8 +31,15 @@ export class PokemonService {
       name: data.name,
       weight: data.weight,
       height: data.height,
-      sprites: data.sprites,
-      types: data.types.map((t) => t.type.name),
+
+      sprites: {
+        front_default:
+          typeof data.sprites.front_default === 'string'
+            ? data.sprites.front_default
+            : '',
+      },
+
+      types: data.types.map((type) => type.type.name),
     };
   }
 }

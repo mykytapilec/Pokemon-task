@@ -1,24 +1,62 @@
 import { api } from './client';
 
+import type {
+  Collection,
+  CreateCollectionPayload,
+} from '../types/collection';
+
 export const collectionsApi = {
-  getAll: () => api.get('/collections'),
+  getAll: async (): Promise<Collection[]> => {
+    const response =
+      await api.get<Collection[]>('/collections');
 
-  getOne: (id: string) => api.get(`/collections/${id}`),
+    return response.data;
+  },
 
-  create: (data: unknown) => api.post('/collections', data),
+  getOne: async (
+    id: string,
+  ): Promise<Collection> => {
+    const response =
+      await api.get<Collection>(
+        `/collections/${id}`,
+      );
 
-  remove: (id: string) => api.delete(`/collections/${id}`),
+    return response.data;
+  },
 
-  importFile: (file: File) => {
+  create: async (
+    data: CreateCollectionPayload,
+  ): Promise<Collection> => {
+    const response =
+      await api.post<Collection>(
+        '/collections',
+        data,
+      );
+
+    return response.data;
+  },
+
+  remove: async (id: string) => {
+    return api.delete(`/collections/${id}`);
+  },
+
+  importFile: async (file: File) => {
     const formData = new FormData();
 
     formData.append('file', file);
 
-    return api.post('/collections/import', formData);
+    return api.post(
+      '/collections/import',
+      formData,
+    );
   },
 
-  exportFile: (id: string) =>
-    api.get(`/collections/${id}/export`, {
-      responseType: 'blob',
-    }),
+  exportFile: async (id: string) => {
+    return api.get(
+      `/collections/${id}/export`,
+      {
+        responseType: 'blob',
+      },
+    );
+  },
 };
