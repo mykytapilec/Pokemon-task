@@ -36,6 +36,18 @@ export const collectionsApi = {
     return response.data;
   },
 
+  update: async (
+    id: string,
+    data: {
+      name: string;
+    },
+  ) => {
+    return api.patch(
+      `/collections/${id}`,
+      data,
+    );
+  },
+
   remove: async (id: string) => {
     return api.delete(`/collections/${id}`);
   },

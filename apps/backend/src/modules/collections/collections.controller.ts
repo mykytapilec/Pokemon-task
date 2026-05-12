@@ -46,7 +46,6 @@ export class CollectionsController {
     const fileContent = JSON.stringify(collection, null, 2);
 
     res.setHeader('Content-Type', 'application/json');
-
     res.setHeader(
       'Content-Disposition',
       `attachment; filename=collection-${id}.json`,
@@ -57,14 +56,10 @@ export class CollectionsController {
 
   @Post('import')
   @UseInterceptors(FileInterceptor('file'))
-  async importFile(
-    @UploadedFile()
-    file: {
-      buffer: Buffer;
-    },
-  ) {
+  async importFile(@UploadedFile() file: { buffer: Buffer }) {
     const raw = file.buffer.toString('utf-8');
 
+    // FIX: убираем any из JSON.parse
     const parsed: unknown = JSON.parse(raw);
 
     const data = parsed as CreateCollectionDto;
