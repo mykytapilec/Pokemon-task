@@ -1,5 +1,11 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsNumber, IsString, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsNumber,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 
 class PokemonDto {
   @IsNumber()
@@ -13,11 +19,13 @@ class PokemonDto {
 }
 
 export class UpdateCollectionDto {
+  @IsOptional()
   @IsString()
-  name!: string;
+  name?: string;
 
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => PokemonDto)
-  pokemons!: PokemonDto[];
+  pokemons?: PokemonDto[];
 }

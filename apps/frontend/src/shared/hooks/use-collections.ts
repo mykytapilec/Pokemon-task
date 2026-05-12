@@ -13,25 +13,19 @@ export const useCollections = () => {
   });
 };
 
-export const useCollection = (
-  id: string,
-) => {
+export const useCollection = (id: string) => {
   return useQuery({
     queryKey: ['collection', id],
-    queryFn: () =>
-      collectionsApi.getOne(id),
+    queryFn: () => collectionsApi.getOne(id),
     enabled: !!id,
   });
 };
 
 export const useCreateCollection = () => {
-  const queryClient =
-    useQueryClient();
+  const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn:
-      collectionsApi.create,
-
+    mutationFn: collectionsApi.create,
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['collections'],
@@ -41,47 +35,60 @@ export const useCreateCollection = () => {
 };
 
 export const useUpdateCollection = () => {
-  const queryClient =
-    useQueryClient();
+  const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
+    mutationFn: ({ id, data }: {
       id: string;
       data: {
-        name: string;
+        name?: string;
+        pokemons?: any[];
       };
-    }) =>
-      collectionsApi.update(
-        id,
-        data,
-      ),
+    }) => collectionsApi.update(id, data),
 
-    onSuccess: (_, variables) => {
+    onMutate: async ({ id, data }) => {
+      await queryClient.cancelQueries({ queryKey: ['collection', id] });
+
+      const previous = queryClient.getQueryData(['collection', id]);
+
+      queryClient.setQueryData(['collection', id], (old: any) => {
+        if (!old) return old;
+
+        return {
+          ...old,
+          ...data,
+        };
+      });
+
+      return { previous };
+    },
+
+    onError: (_err, variables, context: any) => {
+      if (context?.previous) {
+        queryClient.setQueryData(
+          ['collection', variables.id],
+          context.previous,
+        );
+      }
+    },
+
+    onSettled: (_data, _err, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ['collections'],
+        queryKey: ['collection', variables.id],
       });
 
       queryClient.invalidateQueries({
-        queryKey: [
-          'collection',
-          variables.id,
-        ],
+        queryKey: ['collections'],
       });
     },
   });
 };
 
 export const useDeleteCollection = () => {
-  const queryClient =
-    useQueryClient();
+  const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn:
-      collectionsApi.remove,
-
+    mutationFn: collectionsApi.remove,
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['collections'],
@@ -91,13 +98,10 @@ export const useDeleteCollection = () => {
 };
 
 export const useImportCollection = () => {
-  const queryClient =
-    useQueryClient();
+  const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn:
-      collectionsApi.importFile,
-
+    mutationFn: collectionsApi.importFile,
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['collections'],
@@ -108,7 +112,58 @@ export const useImportCollection = () => {
 
 export const useExportCollection = () => {
   return useMutation({
-    mutationFn:
-      collectionsApi.exportFile,
+    mutationFn: collectionsApi.exportFile,
   });
+};
+
+/* ================================
+   🧩 COLLECTION ACTION HELPERS
+   ================================ */
+
+export const useAddPokemonToCollection = () => {
+  const update = useUpdateCollection();
+
+  return {
+    mutate: ({
+      id,
+      pokemon,
+      currentPokemons,
+    }: {
+      id: string;
+      pokemon: any;
+      currentPokemons: any[];
+    }) => {
+      update.mutate({
+        id,
+        data: {
+          pokemons: [...currentPokemons, pokemon],
+        },
+      });
+    },
+  };
+};
+
+export const useRemovePokemonFromCollection = () => {
+  const update = useUpdateCollection();
+
+  return {
+    mutate: ({
+      id,
+      pokemonId,
+      currentPokemons,
+    }: {
+      id: string;
+      pokemonId: number;
+      currentPokemons: any[];
+    }) => {
+      update.mutate({
+        id,
+        data: {
+          pokemons: currentPokemons.filter(
+            (p) => p.id !== pokemonId,
+          ),
+        },
+      });
+    },
+  };
 };

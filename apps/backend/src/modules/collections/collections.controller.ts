@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Res,
   UploadedFile,
@@ -14,6 +15,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 
 import { CollectionsService } from './collections.service';
 import { CreateCollectionDto } from './dto/create-collection.dto';
+import { UpdateCollectionDto } from './dto/update-collection.dto';
 
 @Controller('collections')
 export class CollectionsController {
@@ -32,6 +34,11 @@ export class CollectionsController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() dto: UpdateCollectionDto) {
+    return this.service.update(id, dto);
   }
 
   @Delete(':id')
@@ -58,8 +65,6 @@ export class CollectionsController {
   @UseInterceptors(FileInterceptor('file'))
   async importFile(@UploadedFile() file: { buffer: Buffer }) {
     const raw = file.buffer.toString('utf-8');
-
-    // FIX: убираем any из JSON.parse
     const parsed: unknown = JSON.parse(raw);
 
     const data = parsed as CreateCollectionDto;
