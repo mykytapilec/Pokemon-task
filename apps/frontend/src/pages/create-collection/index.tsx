@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 
-import { pokemonApi } from '../../shared/api/pokemon';
-import { collectionsApi } from '../../shared/api/collections';
+import { usePokemonList } from '../../shared/hooks/use-pokemon';
+import { useCreateCollection, useImportCollection } from '../../shared/hooks/use-collections';
 
 import type { PokemonDetails } from '../../shared/types/pokemon';
 import { PokemonCard } from '../../features/pokemon-catalog/pokemon-card';
@@ -10,27 +10,14 @@ import { PokemonCard } from '../../features/pokemon-catalog/pokemon-card';
 export const CreateCollectionPage = () => {
   const navigate = useNavigate();
 
-  const [pokemons, setPokemons] = useState<PokemonDetails[]>([]);
+  const { data: pokemons = [], isLoading } = usePokemonList();
+
+  const createMutation = useCreateCollection();
+  const importMutation = useImportCollection();
+
   const [selected, setSelected] = useState<PokemonDetails[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [name, setName] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const load = async () => {
-      const list = await pokemonApi.getAll(20, 0);
-
-      const details = await Promise.all(
-        list.results.map((pokemon) =>
-          pokemonApi.getByName(pokemon.name),
-        ),
-      );
-
-      setPokemons(details);
-    };
-
-    void load();
-  }, []);
 
   const totalWeight = useMemo(() => {
     return selected.reduce((sum, pokemon) => sum + pokemon.weight, 0);
@@ -59,33 +46,29 @@ export const CreateCollectionPage = () => {
   const handleSave = async () => {
     if (!isValid) return;
 
-    try {
-      setLoading(true);
+    await createMutation.mutateAsync({
+      name,
+      pokemons: selected.map((pokemon) => ({
+        id: pokemon.id,
+        name: pokemon.name,
+        weight: pokemon.weight,
+      })),
+    });
 
-      await collectionsApi.create({
-        name,
-        pokemons: selected.map((pokemon) => ({
-          id: pokemon.id,
-          name: pokemon.name,
-          weight: pokemon.weight,
-        })),
-      });
+    navigate('/');
+  };
 
-      navigate('/');
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
+  const handleImport = async () => {
+    if (!file) return;
+
+    await importMutation.mutateAsync(file);
+
+    navigate('/');
   };
 
   return (
     <div style={{ padding: '24px' }}>
-      <div style={{ marginBottom: '12px' }}>
-        <Link to="/" style={{ textDecoration: 'none' }}>
-          ← Back to Home
-        </Link>
-      </div>
+      <Link to="/">← Back to Home</Link>
 
       <h1>Create Collection</h1>
 
@@ -93,7 +76,7 @@ export const CreateCollectionPage = () => {
         type="text"
         placeholder="Collection name"
         value={name}
-        onChange={(event) => setName(event.target.value)}
+        onChange={(e) => setName(e.target.value)}
         style={{
           padding: '8px',
           marginBottom: '16px',
@@ -116,20 +99,14 @@ export const CreateCollectionPage = () => {
         />
 
         <button
-          onClick={async () => {
-            if (!file) return;
-            await collectionsApi.importFile(file);
-            navigate('/');
-          }}
-          style={{
-            marginLeft: '8px',
-            padding: '8px 12px',
-            cursor: 'pointer',
-          }}
+          onClick={() => void handleImport()}
+          style={{ marginLeft: '8px' }}
         >
           Import Collection
         </button>
       </div>
+
+      {isLoading && <p>Loading Pokémon...</p>}
 
       {totalWeight > 1300 && (
         <p style={{ color: 'red' }}>Weight limit exceeded</p>
@@ -143,13 +120,13 @@ export const CreateCollectionPage = () => {
 
       <button
         onClick={() => void handleSave()}
-        disabled={!isValid || loading}
+        disabled={!isValid || createMutation.isPending}
         style={{
           marginBottom: '24px',
           padding: '12px 16px',
         }}
       >
-        {loading ? 'Saving...' : 'Save Collection'}
+        {createMutation.isPending ? 'Saving...' : 'Save Collection'}
       </button>
 
       <div

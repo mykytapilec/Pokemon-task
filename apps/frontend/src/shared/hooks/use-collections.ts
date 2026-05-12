@@ -48,3 +48,9 @@ export const useImportCollection = () => {
     },
   });
 };
+
+export const useExportCollection = () => {
+  return useMutation({
+    mutationFn: collectionsApi.exportFile,
+  });
+};
