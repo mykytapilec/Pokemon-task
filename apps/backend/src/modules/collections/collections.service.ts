@@ -4,16 +4,17 @@ import { Model } from 'mongoose';
 
 import { Collection, CollectionDocument } from './schemas/collection.schema';
 import { CreateCollectionDto } from './dto/create-collection.dto';
+import { UpdateCollectionDto } from './dto/update-collection.dto';
 import { CollectionValidator } from './domain/collection.validator';
-import { PokemonDto } from './dto/pokemon.dto';
 
 @Injectable()
 export class CollectionsService {
   constructor(
     @InjectModel(Collection.name)
-    private model: Model<CollectionDocument>,
+    private readonly model: Model<CollectionDocument>,
   ) {}
 
+  // CREATE
   async create(dto: CreateCollectionDto) {
     const validated = CollectionValidator.validate({
       pokemons: dto.pokemons,
@@ -26,88 +27,70 @@ export class CollectionsService {
     });
   }
 
+  // GET ALL
   async findAll() {
-    return this.model.find().lean();
+    return this.model.find().exec();
   }
 
+  // GET ONE
   async findOne(id: string) {
-    const collection = await this.model.findById(id).lean();
+    const collection = await this.model.findById(id).exec();
 
-    if (!collection) throw new NotFoundException();
+    if (!collection) {
+      throw new NotFoundException('Collection not found');
+    }
 
     return collection;
   }
 
+  // DELETE
   async delete(id: string) {
-    const res = await this.model.findByIdAndDelete(id);
-    if (!res) throw new NotFoundException();
-    return res;
+    const deleted = await this.model.findByIdAndDelete(id).exec();
+
+    if (!deleted) {
+      throw new NotFoundException('Collection not found');
+    }
+
+    return deleted;
   }
 
-  async rename(id: string, name: string) {
-    const res = await this.model.findByIdAndUpdate(id, { name }, { new: true });
+  // CLEAN REST UPDATE
+  async update(id: string, dto: UpdateCollectionDto) {
+    const collection = await this.model.findById(id).exec();
 
-    if (!res) throw new NotFoundException();
+    if (!collection) {
+      throw new NotFoundException('Collection not found');
+    }
 
-    return res;
-  }
+    const pokemons = dto.pokemons ?? collection.pokemons;
+    const name = dto.name ?? collection.name;
 
-  async addPokemon(id: string, pokemon: PokemonDto) {
-    const collection = await this.model.findById(id);
-    if (!collection) throw new NotFoundException();
-
-    const updated = [
-      ...(collection.pokemons as PokemonDto[]),
-      {
-        id: pokemon.id,
-        name: pokemon.name,
-        weight: pokemon.weight,
-      },
-    ];
-
-    const validated = CollectionValidator.validate({
-      pokemons: updated,
-    });
+    const totalWeight = pokemons.reduce((sum, p) => sum + p.weight, 0);
 
     return this.model.findByIdAndUpdate(
       id,
       {
-        pokemons: validated.pokemons,
-        totalWeight: validated.totalWeight,
+        name,
+        pokemons,
+        totalWeight,
       },
       { new: true },
     );
   }
 
-  async removePokemon(id: string, pokemonId: number) {
-    const collection = await this.model.findById(id);
-    if (!collection) throw new NotFoundException();
-
-    const updated = (collection.pokemons as PokemonDto[]).filter(
-      (p) => p.id !== pokemonId,
-    );
-
-    const validated = CollectionValidator.validate({
-      pokemons: updated,
-    });
-
-    return this.model.findByIdAndUpdate(
-      id,
-      {
-        pokemons: validated.pokemons,
-        totalWeight: validated.totalWeight,
-      },
-      { new: true },
-    );
+  import(file: any) {
+    console.log(file);
+    return { ok: true };
   }
 
-  // CLEAN EXPORT (fix TS error)
+  // EXPORT
   async export(id: string) {
-    const collection = await this.findOne(id);
+    const collection = await this.model.findById(id).exec();
 
-    return {
-      ...collection,
-      exportedAt: new Date().toISOString(),
-    };
+    if (!collection) {
+      throw new NotFoundException('Collection not found');
+    }
+
+    return collection;
   }
 }
