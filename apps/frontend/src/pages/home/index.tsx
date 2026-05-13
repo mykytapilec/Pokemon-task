@@ -50,7 +50,7 @@ export const HomePage = () => {
           }}
         />
 
-        <button onClick={handleImport} disabled={!file || importMutation.isPending}>
+        <button onClick={() => void handleImport()} disabled={!file || importMutation.isPending}>
           {importMutation.isPending ? 'Importing...' : 'Import Collection'}
         </button>
       </div>

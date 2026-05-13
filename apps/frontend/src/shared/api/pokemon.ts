@@ -10,9 +10,10 @@ export const pokemonApi = {
     limit = 20,
     offset = 0,
   ): Promise<PokemonListResponse> => {
-    const response = await api.get<PokemonListResponse>(
-      `/pokemon?limit=${limit}&offset=${offset}`,
-    );
+    const response =
+      await api.get<PokemonListResponse>(
+        `/pokemon?limit=${limit}&offset=${offset}`,
+      );
 
     return response.data;
   },

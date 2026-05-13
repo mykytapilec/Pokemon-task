@@ -1,43 +1,69 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
-import { usePokemonList } from '../../shared/hooks/use-pokemon';
 import {
+  useAddPokemonToCollection,
   useCollection,
   useExportCollection,
+  useRemovePokemonFromCollection,
   useUpdateCollection,
 } from '../../shared/hooks/use-collections';
 
-import type { PokemonDetails } from '../../shared/types/pokemon';
+import { usePokemonList } from '../../shared/hooks/use-pokemon';
+
+import type { Pokemon, PokemonDetails } from '../../shared/types/pokemon';
 
 export const CollectionPage = () => {
   const { id } = useParams<{ id: string }>();
 
-  const { data: collection, isLoading } = useCollection(id!);
-  const { data: pokemons = [] } = usePokemonList();
+  const { data: collection, isLoading } = useCollection(id ?? '');
+
+  const { data: availablePokemons = [] } = usePokemonList();
 
   const exportMutation = useExportCollection();
   const updateMutation = useUpdateCollection();
+  const addPokemonMutation = useAddPokemonToCollection();
+  const removePokemonMutation = useRemovePokemonFromCollection();
 
-  const [editingName, setEditingName] = useState(false);
-  const [editingPokemons, setEditingPokemons] = useState(false);
+  const [editing, setEditing] = useState(false);
 
-  const [name, setName] = useState('');
-  const [selected, setSelected] = useState<PokemonDetails[]>([]);
+  const [name, setName] = useState(() => collection?.name ?? '');
 
-  useEffect(() => {
-    if (collection?.name) setName(collection.name);
-    if (collection?.pokemons) setSelected(collection.pokemons);
-  }, [collection]);
+  const collectionName = collection?.name ?? '';
+  if (name === '' && collectionName) {
+    setName(collectionName);
+  }
+
+  const selected = useMemo<Pokemon[]>(
+    () => collection?.pokemons ?? [],
+    [collection],
+  );
+
+  const totalWeight = useMemo(
+    () => selected.reduce((sum, p) => sum + p.weight, 0),
+    [selected],
+  );
+
+  const uniqueSpeciesCount = useMemo(
+    () => new Set(selected.map((p) => p.name)).size,
+    [selected],
+  );
+
+  const availableToAdd: PokemonDetails[] = availablePokemons.filter(
+    (p: PokemonDetails) => !selected.some((sp) => sp.id === p.id),
+  );
 
   const handleExport = async () => {
     if (!id || !collection) return;
 
     const response = await exportMutation.mutateAsync(id);
 
-    const blob = new Blob([response.data], {
-      type: 'application/json',
-    });
+    const blob = new Blob(
+      [JSON.stringify(response.data)],
+       {
+          type: 'application/json',
+       },
+    );
 
     const url = window.URL.createObjectURL(blob);
 
@@ -50,45 +76,42 @@ export const CollectionPage = () => {
   };
 
   const handleRename = async () => {
-    if (!id || !name.trim()) return;
+    if (!id || !collection) return;
 
     await updateMutation.mutateAsync({
       id,
       data: {
         name: name.trim(),
+        pokemons: selected,
       },
     });
 
-    setEditingName(false);
+    setEditing(false);
   };
 
-  const togglePokemon = (pokemon: PokemonDetails) => {
-    setSelected((prev) => {
-      const exists = prev.find((p) => p.id === pokemon.id);
+  const handleRemovePokemon = (pokemonId: number) => {
+    if (!id || !collection) return;
 
-      if (exists) {
-        return prev.filter((p) => p.id !== pokemon.id);
-      }
-
-      return [...prev, pokemon];
-    });
-  };
-
-  const handleSavePokemons = async () => {
-    if (!id) return;
-
-    await updateMutation.mutateAsync({
+    removePokemonMutation.mutate({
       id,
-      data: {
-        pokemons: selected.map((p) => ({
-          id: p.id,
-          name: p.name,
-          weight: p.weight,
-        })),
-      },
+      pokemonId,
+      currentPokemons: selected,
     });
+  };
 
-    setEditingPokemons(false);
+  const handleAddPokemon = (pokemon: PokemonDetails) => {
+    if (!id || !collection) return;
+
+    addPokemonMutation.mutate({
+      id,
+      pokemon: {
+        id: pokemon.id,
+        name: pokemon.name,
+        weight: pokemon.weight,
+        _id: '',
+      },
+      currentPokemons: selected,
+    });
   };
 
   if (isLoading || !collection) {
@@ -99,130 +122,60 @@ export const CollectionPage = () => {
     <div style={{ padding: '24px' }}>
       <Link to="/">← Back to Home</Link>
 
-      {/* NAME EDIT */}
-      <div style={{ marginTop: '16px' }}>
-        {editingName ? (
+      <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+        {editing ? (
           <>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-
-            <button onClick={() => void handleRename()}>
-              Save
-            </button>
-
-            <button onClick={() => setEditingName(false)}>
-              Cancel
-            </button>
+            <input value={name} onChange={(e) => setName(e.target.value)} />
+            <button onClick={() => void handleRename()}>Save</button>
+            <button onClick={() => setEditing(false)}>Cancel</button>
           </>
         ) : (
           <>
             <h1>{collection.name}</h1>
-            <button onClick={() => setEditingName(true)}>
-              Rename
-            </button>
+            <button onClick={() => setEditing(true)}>Rename</button>
           </>
         )}
       </div>
 
-      {/* ACTIONS */}
-      <div style={{ marginTop: '12px' }}>
-        <button onClick={() => void handleExport()}>
-          Download JSON
-        </button>
+      <button onClick={() => void handleExport()}>
+        Download JSON
+      </button>
 
-        <button
-          onClick={() => setEditingPokemons((v) => !v)}
-          style={{ marginLeft: 12 }}
-        >
-          {editingPokemons ? 'Close Editor' : 'Edit Pokemons'}
-        </button>
-      </div>
+      <p>Total Weight: {totalWeight}</p>
+      <p>Unique Species: {uniqueSpeciesCount}</p>
 
-      <p>Total Weight: {collection.totalWeight}</p>
+      <h2>Pokemons in Collection</h2>
 
-      {/* POKEMONS IN COLLECTION */}
-      <h3>Pokemons in collection</h3>
-
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: '16px',
-        }}
-      >
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
         {selected.map((p) => (
           <div key={p.id}>
             <img
               src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`}
             />
-
             <h4>{p.name}</h4>
+            <p>{p.weight} hg</p>
 
-            <button
-              onClick={() =>
-                setSelected((prev) =>
-                  prev.filter((x) => x.id !== p.id),
-                )
-              }
-            >
+            <button onClick={() => handleRemovePokemon(p.id)}>
               Remove
             </button>
           </div>
         ))}
       </div>
 
-      {/* EDIT MODE */}
-      {editingPokemons && (
-        <>
-          <h3 style={{ marginTop: 24 }}>
-            Add / Remove Pokemons
-          </h3>
+      <h2>Add More Pokemons</h2>
 
-          <button onClick={() => void handleSavePokemons()}>
-            Save Pokemons
-          </button>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+        {availableToAdd.map((p) => (
+          <div key={p.id}>
+            <img src={p.sprites.front_default} />
+            <p>{p.name}</p>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: '16px',
-              marginTop: 12,
-            }}
-          >
-            {pokemons.map((p) => {
-              const isSelected = selected.some(
-                (x) => x.id === p.id,
-              );
-
-              return (
-                <div
-                  key={p.id}
-                  onClick={() => togglePokemon(p)}
-                  style={{
-                    border: isSelected
-                      ? '2px solid green'
-                      : '1px solid #ccc',
-                    padding: 8,
-                    cursor: 'pointer',
-                  }}
-                >
-                  <img
-                    src={
-                      p.sprites?.front_default ||
-                      `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`
-                    }
-                  />
-
-                  <p>{p.name}</p>
-                </div>
-              );
-            })}
+            <button onClick={() => handleAddPokemon(p)}>
+              Add
+            </button>
           </div>
-        </>
-      )}
+        ))}
+      </div>
     </div>
   );
 };
