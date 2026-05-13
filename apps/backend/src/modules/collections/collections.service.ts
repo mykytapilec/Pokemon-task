@@ -78,8 +78,8 @@ export class CollectionsService {
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   import(file: any) {
-    console.log(file);
     return { ok: true };
   }
 

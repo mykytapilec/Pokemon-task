@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 import {
@@ -25,9 +25,13 @@ export const CollectionPage = () => {
   const removePokemonMutation = useRemovePokemonFromCollection();
 
   const [editing, setEditing] = useState(false);
-  const [name, setName] = useState(
-    collection?.name ?? '',
-  );
+  const [name, setName] = useState('');
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setName(collection?.name ?? '');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [collection?._id]);
 
   const selected = useMemo<Pokemon[]>(
     () => collection?.pokemons ?? [],

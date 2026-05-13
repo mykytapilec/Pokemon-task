@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
 import { collectionsApi } from '../api/collections';
 
 import type {
@@ -49,7 +50,9 @@ export const useCreateCollection = () => {
       collectionsApi.create(data),
 
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['collections'] });
+      void qc.invalidateQueries({
+        queryKey: ['collections'],
+      });
     },
   });
 };
@@ -59,15 +62,18 @@ export const useDeleteCollection = () => {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => collectionsApi.remove(id),
+    mutationFn: (id: string) =>
+      collectionsApi.remove(id),
 
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['collections'] });
+      void qc.invalidateQueries({
+        queryKey: ['collections'],
+      });
     },
   });
 };
 
-// UPDATE (full replace)
+// UPDATE
 export const useUpdateCollection = () => {
   const qc = useQueryClient();
 
@@ -117,10 +123,24 @@ export const useAddPokemonToCollection = () => {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, pokemon }: AddPokemonInput) =>
-      collectionsApi.update(id, {
-        pokemons: [pokemon],
-      }),
+    mutationFn: async ({ id, pokemon }: AddPokemonInput) => {
+      const current = await collectionsApi.getOne(id);
+
+      return collectionsApi.update(id, {
+        pokemons: [
+          ...current.pokemons.map((p) => ({
+            id: p.id,
+            name: p.name,
+            weight: p.weight,
+          })),
+          {
+            id: pokemon.id,
+            name: pokemon.name,
+            weight: pokemon.weight,
+          },
+        ],
+      });
+    },
 
     onSuccess: (_, vars) => {
       void qc.invalidateQueries({
@@ -135,15 +155,20 @@ export const useRemovePokemonFromCollection = () => {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, pokemonId }: RemovePokemonInput) => {
-      const collection = await collectionsApi.getOne(id);
-
-      const filtered = collection.pokemons.filter(
-        (p) => p.id !== pokemonId,
-      );
+    mutationFn: async ({
+      id,
+      pokemonId,
+    }: RemovePokemonInput) => {
+      const current = await collectionsApi.getOne(id);
 
       return collectionsApi.update(id, {
-        pokemons: filtered,
+        pokemons: current.pokemons
+          .filter((p) => p.id !== pokemonId)
+          .map((p) => ({
+            id: p.id,
+            name: p.name,
+            weight: p.weight,
+          })),
       });
     },
 
@@ -158,7 +183,8 @@ export const useRemovePokemonFromCollection = () => {
 // EXPORT
 export const useExportCollection = () =>
   useMutation({
-    mutationFn: (id: string) => collectionsApi.exportFile(id),
+    mutationFn: (id: string) =>
+      collectionsApi.exportFile(id),
   });
 
 // IMPORT
@@ -166,7 +192,8 @@ export const useImportCollection = () => {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (file: File) => collectionsApi.importFile(file),
+    mutationFn: (file: File) =>
+      collectionsApi.importFile(file),
 
     onSuccess: () => {
       void qc.invalidateQueries({

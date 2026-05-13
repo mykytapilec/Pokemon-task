@@ -14,7 +14,6 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -23,7 +22,6 @@ async function bootstrap() {
     }),
   );
 
-  // Swagger setup
   const config = new DocumentBuilder()
     .setTitle('Pokemon API')
     .setDescription('API for managing Pokémon collections')
@@ -37,10 +35,10 @@ async function bootstrap() {
 
   await app.listen(port);
 
-  // eslint-disable-next-line no-console
   console.log(`🚀 Server running on http://localhost:${port}`);
-  // eslint-disable-next-line no-console
+
   console.log(`📚 Swagger available on http://localhost:${port}/docs`);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 bootstrap();
