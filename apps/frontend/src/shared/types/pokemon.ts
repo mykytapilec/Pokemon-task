@@ -1,11 +1,7 @@
-export interface PokemonListItem {
+export interface Pokemon {
+  id: number;
   name: string;
-  url: string;
-}
-
-export interface PokemonListResponse {
-  count: number;
-  results: PokemonListItem[];
+  weight: number;
 }
 
 export interface PokemonDetails {
@@ -13,15 +9,19 @@ export interface PokemonDetails {
   name: string;
   weight: number;
   height: number;
+
   sprites: {
     front_default: string;
   };
+
   types: string[];
 }
 
-export interface Pokemon {
-  id: number;
+export interface PokemonListItem {
   name: string;
-  weight: number;
-  _id: string;
+  url: string;
+}
+
+export interface PokemonListResponse {
+  results: PokemonListItem[];
 }

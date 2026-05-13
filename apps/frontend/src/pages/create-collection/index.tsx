@@ -5,8 +5,11 @@ import { usePokemonList } from '../../shared/hooks/use-pokemon';
 import { useCreateCollection } from '../../shared/hooks/use-collections';
 
 import type { PokemonDetails } from '../../shared/types/pokemon';
+
 import { PokemonCard } from '../../components/pokemon-card';
 import { PokemonCardSkeleton } from '../../components/pokemon-card-skeleton';
+
+import '../pages.css';
 
 export const CreateCollectionPage = () => {
   const navigate = useNavigate();
@@ -46,85 +49,65 @@ export const CreateCollectionPage = () => {
   const handleSave = async () => {
     if (!isValid) return;
 
-    await createMutation.mutateAsync({
-      name,
-      pokemons: selected.map((p) => ({
-        id: p.id,
-        name: p.name,
-        weight: p.weight,
-      })),
-    });
+    try {
+      await createMutation.mutateAsync({
+        name,
+        pokemons: selected.map((p) => ({
+          id: p.id,
+          name: p.name,
+          weight: p.weight,
+        })),
+      });
 
-    navigate('/');
+      void navigate('/');
+    } catch (err) {
+      console.error('Create failed:', err);
+    }
   };
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Link to="/">← Back to Home</Link>
+    <div className="page">
+      <Link className="page__back" to="/">
+        ← Back
+      </Link>
 
-      <h1>Create Collection</h1>
+      <h1 className="page__title">Create Collection</h1>
 
-      <input
-        type="text"
-        placeholder="Collection name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        style={{
-          padding: '8px',
-          marginBottom: '16px',
-          width: '300px',
-        }}
-      />
+      <div className="page__header">
+        <input
+          className="input"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Collection name"
+        />
 
-      <p>Total Weight: {totalWeight}</p>
-      <p>Unique Species: {uniqueSpeciesCount}</p>
-
-      {!isValid && (
-        <p style={{ color: '#999' }}>
-          Fill name + select 3+ Pokémon under weight limit
-        </p>
-      )}
-
-      {isLoading && (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: '16px',
-          }}
+        <button
+          className="btn btn--primary"
+          onClick={() => void handleSave()}
+          disabled={!isValid}
         >
-          {Array.from({ length: 8 }).map((_, i) => (
-            <PokemonCardSkeleton key={i} />
-          ))}
-        </div>
-      )}
+          Save
+        </button>
+      </div>
 
-      <button
-        onClick={() => void handleSave()}
-        disabled={!isValid || createMutation.isPending}
-        style={{
-          marginBottom: '24px',
-          padding: '12px 16px',
-        }}
-      >
-        {createMutation.isPending ? 'Saving...' : 'Save Collection'}
-      </button>
+      <div className="page__stats">
+        <p>Total Weight: {totalWeight}</p>
+        <p>Unique Species: {uniqueSpeciesCount}</p>
+      </div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: '16px',
-        }}
-      >
-        {pokemons.map((pokemon) => (
-          <PokemonCard
-            key={pokemon.id}
-            pokemon={pokemon}
-            selected={selected.some((p) => p.id === pokemon.id)}
-            onSelect={togglePokemon}
-          />
-        ))}
+      <div className="page__grid">
+        {isLoading
+          ? Array.from({ length: 12 }).map((_, i) => (
+              <PokemonCardSkeleton key={i} />
+            ))
+          : pokemons.map((pokemon: PokemonDetails) => (
+              <PokemonCard
+                key={pokemon.id}
+                pokemon={pokemon}
+                selected={selected.some((p) => p.id === pokemon.id)}
+                onSelect={togglePokemon}
+              />
+            ))}
       </div>
     </div>
   );

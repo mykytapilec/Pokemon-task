@@ -1,16 +1,14 @@
 import {
-  Body,
   Controller,
-  Delete,
   Get,
-  Param,
-  Patch,
   Post,
-  Res,
+  Patch,
+  Delete,
+  Param,
+  Body,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
-import { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 
 import { CollectionsService } from './collections.service';
@@ -21,57 +19,46 @@ import { UpdateCollectionDto } from './dto/update-collection.dto';
 export class CollectionsController {
   constructor(private readonly service: CollectionsService) {}
 
+  // CREATE
   @Post()
   create(@Body() dto: CreateCollectionDto) {
     return this.service.create(dto);
   }
 
+  // GET ALL
   @Get()
   findAll() {
     return this.service.findAll();
   }
 
+  // GET ONE
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);
   }
 
+  // CLEAN REST UPDATE
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateCollectionDto) {
     return this.service.update(id, dto);
   }
 
+  // DELETE
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  delete(@Param('id') id: string) {
     return this.service.delete(id);
   }
 
+  // EXPORT
   @Get(':id/export')
-  async export(@Param('id') id: string, @Res() res: Response) {
-    const collection = await this.service.findOne(id);
-
-    const fileContent = JSON.stringify(collection, null, 2);
-
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename=collection-${id}.json`,
-    );
-
-    return res.send(fileContent);
+  export(@Param('id') id: string) {
+    return this.service.export(id);
   }
 
+  // IMPORT
   @Post('import')
   @UseInterceptors(FileInterceptor('file'))
-  async importFile(@UploadedFile() file: { buffer: Buffer }) {
-    const raw = file.buffer.toString('utf-8');
-    const parsed: unknown = JSON.parse(raw);
-
-    const data = parsed as CreateCollectionDto;
-
-    return this.service.create({
-      name: data.name,
-      pokemons: data.pokemons,
-    });
+  import(@UploadedFile() file: any) {
+    return this.service.import(file);
   }
 }

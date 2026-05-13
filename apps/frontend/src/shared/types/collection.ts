@@ -1,10 +1,4 @@
-import type { Pokemon } from "./pokemon";
-
-export interface CollectionPokemon {
-  id: number;
-  name: string;
-  weight: number;
-}
+import type { Pokemon } from './pokemon';
 
 export interface Collection {
   _id: string;
@@ -16,4 +10,9 @@ export interface Collection {
 export interface CreateCollectionPayload {
   name: string;
   pokemons: Pokemon[];
+}
+
+export interface UpdateCollectionPayload {
+  name?: string;
+  pokemons?: Pokemon[];
 }

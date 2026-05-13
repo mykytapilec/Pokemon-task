@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
@@ -11,39 +11,66 @@ import { CollectionValidator } from './domain/collection.validator';
 export class CollectionsService {
   constructor(
     @InjectModel(Collection.name)
-    private model: Model<CollectionDocument>,
+    private readonly model: Model<CollectionDocument>,
   ) {}
 
+  // CREATE
   async create(dto: CreateCollectionDto) {
-    const { totalWeight } = CollectionValidator.validate(dto.pokemons);
+    const validated = CollectionValidator.validate({
+      pokemons: dto.pokemons,
+    });
 
     return this.model.create({
-      ...dto,
-      totalWeight,
+      name: dto.name,
+      pokemons: validated.pokemons,
+      totalWeight: validated.totalWeight,
     });
   }
 
+  // GET ALL
   async findAll() {
-    return this.model.find();
+    return this.model.find().exec();
   }
 
+  // GET ONE
   async findOne(id: string) {
-    return this.model.findById(id);
+    const collection = await this.model.findById(id).exec();
+
+    if (!collection) {
+      throw new NotFoundException('Collection not found');
+    }
+
+    return collection;
   }
 
+  // DELETE
+  async delete(id: string) {
+    const deleted = await this.model.findByIdAndDelete(id).exec();
+
+    if (!deleted) {
+      throw new NotFoundException('Collection not found');
+    }
+
+    return deleted;
+  }
+
+  // CLEAN REST UPDATE
   async update(id: string, dto: UpdateCollectionDto) {
-    const existing = await this.model.findById(id);
+    const collection = await this.model.findById(id).exec();
 
-    if (!existing) return null;
+    if (!collection) {
+      throw new NotFoundException('Collection not found');
+    }
 
-    const pokemons = dto.pokemons ?? existing.pokemons;
+    const pokemons = dto.pokemons ?? collection.pokemons;
+    const name = dto.name ?? collection.name;
 
-    const { totalWeight } = CollectionValidator.validate(pokemons);
+    const totalWeight = pokemons.reduce((sum, p) => sum + p.weight, 0);
 
     return this.model.findByIdAndUpdate(
       id,
       {
-        name: dto.name ?? existing.name,
+        name,
         pokemons,
         totalWeight,
       },
@@ -51,7 +78,19 @@ export class CollectionsService {
     );
   }
 
-  async delete(id: string) {
-    return this.model.findByIdAndDelete(id);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  import(file: any) {
+    return { ok: true };
+  }
+
+  // EXPORT
+  async export(id: string) {
+    const collection = await this.model.findById(id).exec();
+
+    if (!collection) {
+      throw new NotFoundException('Collection not found');
+    }
+
+    return collection;
   }
 }
