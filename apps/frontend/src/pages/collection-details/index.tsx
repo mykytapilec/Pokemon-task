@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 import {
@@ -25,14 +25,9 @@ export const CollectionPage = () => {
   const removePokemonMutation = useRemovePokemonFromCollection();
 
   const [editing, setEditing] = useState(false);
-  const [name, setName] = useState('');
-
-  // sync name safely
-  useEffect(() => {
-    if (collection?.name) {
-      setName(collection.name);
-    }
-  }, [collection?.name]);
+  const [name, setName] = useState(
+    collection?.name ?? '',
+  );
 
   const selected = useMemo<Pokemon[]>(
     () => collection?.pokemons ?? [],
@@ -56,11 +51,7 @@ export const CollectionPage = () => {
   const handleExport = async () => {
     if (!id || !collection) return;
 
-    const response = await exportMutation.mutateAsync(id);
-
-    const blob = new Blob([JSON.stringify(response.data)], {
-      type: 'application/json',
-    });
+    const blob = await exportMutation.mutateAsync(id);
 
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
