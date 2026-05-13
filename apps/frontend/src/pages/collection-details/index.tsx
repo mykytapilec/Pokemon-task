@@ -12,6 +12,7 @@ import {
 import { usePokemonList } from '../../shared/hooks/use-pokemon';
 
 import type { Pokemon, PokemonDetails } from '../../shared/types/pokemon';
+import { PageLoader } from '../../components/page-loader';
 
 export const CollectionPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -101,65 +102,84 @@ export const CollectionPage = () => {
   };
 
   if (isLoading || !collection) {
-    return <div>Loading...</div>;
+    return <PageLoader lines={5} height={28} />;
   }
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Link to="/">← Back</Link>
+    <div className="page">
+        <Link className="page__back" to="/">
+        ← Back
+        </Link>
 
-      <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+        <div className="page__header">
         {editing ? (
-          <>
-            <input value={name} onChange={(e) => setName(e.target.value)} />
-            <button onClick={handleRename}>Save</button>
-            <button onClick={() => setEditing(false)}>Cancel</button>
-          </>
+            <>
+            <input
+                className="input"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+            />
+
+            <button className="btn btn--primary" onClick={handleRename}>
+                Save
+            </button>
+
+            <button className="btn btn--ghost" onClick={() => setEditing(false)}>
+                Cancel
+            </button>
+            </>
         ) : (
-          <>
-            <h1>{collection.name}</h1>
-            <button onClick={() => setEditing(true)}>Rename</button>
-          </>
+            <>
+            <h1 className="page__title">{collection.name}</h1>
+
+            <button className="btn btn--ghost" onClick={() => setEditing(true)}>
+                Rename
+            </button>
+            </>
         )}
-      </div>
 
-      <button onClick={() => void handleExport()}>Export JSON</button>
+        <button className="btn btn--ghost" onClick={() => void handleExport()}>
+            Export JSON
+        </button>
+        </div>
 
-      <p>Total Weight: {totalWeight}</p>
-      <p>Unique Species: {uniqueSpeciesCount}</p>
+        <div className="page__stats">
+        <p>Total Weight: {totalWeight}</p>
+        <p>Unique Species: {uniqueSpeciesCount}</p>
+        </div>
 
-      <h2>Pokemons</h2>
+        <h2 className="page__subtitle">Pokemons</h2>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+        <div className="page__grid">
         {selected.map((p) => (
-          <div key={p.id}>
+            <div key={p.id} className="page__card">
             <img
-              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`}
+                src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`}
             />
             <h4>{p.name}</h4>
             <p>{p.weight}</p>
 
-            <button onClick={() => handleRemovePokemon(p.id)}>
-              Remove
+            <button className="btn btn--danger" onClick={() => handleRemovePokemon(p.id)}>
+                Remove
             </button>
-          </div>
+            </div>
         ))}
-      </div>
+        </div>
 
-      <h2>Add Pokemons</h2>
+        <h2 className="page__subtitle">Add Pokemons</h2>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+        <div className="page__grid">
         {availableToAdd.map((p) => (
-          <div key={p.id}>
+            <div key={p.id} className="page__card">
             <img src={p.sprites.front_default} />
             <p>{p.name}</p>
 
-            <button onClick={() => handleAddPokemon(p)}>
-              Add
+            <button className="btn btn--primary" onClick={() => handleAddPokemon(p)}>
+                Add
             </button>
-          </div>
+            </div>
         ))}
-      </div>
+        </div>
     </div>
   );
 };

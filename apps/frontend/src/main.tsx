@@ -6,6 +6,7 @@ import { queryClient } from './shared/lib/query-client';
 import { App } from './App';
 
 import './index.css';
+import './pages/pages.css';
 
 const rootElement =
   document.getElementById('root');

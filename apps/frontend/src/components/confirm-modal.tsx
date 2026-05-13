@@ -1,3 +1,7 @@
+import './components.css';
+
+import { Button } from './button';
+
 type Props = {
   open: boolean;
   title?: string;
@@ -20,52 +24,22 @@ export const ConfirmModal = ({
   if (!open) return null;
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(0,0,0,0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <div
-        style={{
-          background: 'white',
-          padding: '24px',
-          borderRadius: '12px',
-          width: '320px',
-        }}
-      >
-        <h3>{title}</h3>
-        <p>{description}</p>
+    <div className="confirm-modal-overlay">
+      <div className="confirm-modal">
+        <h3 className="confirm-modal__title">{title}</h3>
 
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: '8px',
-            marginTop: '16px',
-          }}
-        >
-          <button onClick={onCancel}>{cancelText}</button>
+        <p className="confirm-modal__description">
+          {description}
+        </p>
 
-          <button
-            onClick={onConfirm}
-            style={{
-              background: '#ff4d4f',
-              color: 'white',
-              border: 'none',
-              padding: '6px 12px',
-              borderRadius: '6px',
-            }}
-          >
+        <div className="confirm-modal__actions">
+          <Button variant="ghost" onClick={onCancel}>
+            {cancelText}
+          </Button>
+
+          <Button variant="danger" onClick={onConfirm}>
             {confirmText}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

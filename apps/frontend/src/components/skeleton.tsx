@@ -1,12 +1,14 @@
-export const Skeleton = ({ height = 80 }: { height?: number }) => {
+import './components.css';
+
+type Props = {
+  height?: number;
+};
+
+export const Skeleton = ({ height = 80 }: Props) => {
   return (
     <div
-      style={{
-        height,
-        background: '#eee',
-        borderRadius: '8px',
-        animation: 'pulse 1.5s infinite',
-      }}
+      className="skeleton"
+      style={{ height }}
     />
   );
 };

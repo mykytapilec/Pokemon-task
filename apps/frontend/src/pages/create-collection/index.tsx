@@ -7,6 +7,9 @@ import { useCreateCollection } from '../../shared/hooks/use-collections';
 import type { PokemonDetails } from '../../shared/types/pokemon';
 
 import { PokemonCard } from '../../components/pokemon-card';
+import { PokemonCardSkeleton } from '../../components/pokemon-card-skeleton';
+
+import '../pages.css';
 
 export const CreateCollectionPage = () => {
   const navigate = useNavigate();
@@ -63,35 +66,48 @@ export const CreateCollectionPage = () => {
   };
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Link to="/">← Back</Link>
+    <div className="page">
+      <Link className="page__back" to="/">
+        ← Back
+      </Link>
 
-      <h1>Create Collection</h1>
+      <h1 className="page__title">Create Collection</h1>
 
-      <input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Collection name"
-      />
+      <div className="page__header">
+        <input
+          className="input"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Collection name"
+        />
 
-      <p>Total Weight: {totalWeight}</p>
-      <p>Unique Species: {uniqueSpeciesCount}</p>
+        <button
+          className="btn btn--primary"
+          onClick={() => void handleSave()}
+          disabled={!isValid}
+        >
+          Save
+        </button>
+      </div>
 
-      <button onClick={() => void handleSave()} disabled={!isValid}>
-        Save
-      </button>
+      <div className="page__stats">
+        <p>Total Weight: {totalWeight}</p>
+        <p>Unique Species: {uniqueSpeciesCount}</p>
+      </div>
 
-      {isLoading && <p>Loading...</p>}
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-        {pokemons.map((pokemon: PokemonDetails) => (
-          <PokemonCard
-            key={pokemon.id}
-            pokemon={pokemon}
-            selected={selected.some((p) => p.id === pokemon.id)}
-            onSelect={togglePokemon}
-          />
-        ))}
+      <div className="page__grid">
+        {isLoading
+          ? Array.from({ length: 12 }).map((_, i) => (
+              <PokemonCardSkeleton key={i} />
+            ))
+          : pokemons.map((pokemon: PokemonDetails) => (
+              <PokemonCard
+                key={pokemon.id}
+                pokemon={pokemon}
+                selected={selected.some((p) => p.id === pokemon.id)}
+                onSelect={togglePokemon}
+              />
+            ))}
       </div>
     </div>
   );

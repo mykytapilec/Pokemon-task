@@ -1,5 +1,9 @@
 import { Link } from 'react-router-dom';
+
 import type { Collection } from '../shared/types/collection';
+
+import { Card } from './card';
+import { Button } from './button';
 
 type Props = {
   collection: Collection;
@@ -13,52 +17,33 @@ export const CollectionCard = ({
   loading,
 }: Props) => {
   return (
-    <div
-      style={{
-        border: '1px solid #ccc',
-        borderRadius: '8px',
-        padding: '16px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        gap: '16px',
-      }}
-    >
+    <Card className="collection-card">
       <Link
         to={`/collections/${collection._id}`}
-        style={{
-          textDecoration: 'none',
-          color: 'inherit',
-          flex: 1,
-        }}
+        className="collection-card__link"
       >
         <div>
-          <h3 style={{ margin: 0 }}>{collection.name}</h3>
+          <h3 className="collection-card__title">
+            {collection.name}
+          </h3>
 
-          <p style={{ margin: '8px 0 0' }}>
+          <p className="collection-card__text">
             Pokemons: {collection.pokemons.length}
           </p>
 
-          <p style={{ margin: 0 }}>
+          <p className="collection-card__text">
             Total Weight: {collection.totalWeight}
           </p>
         </div>
       </Link>
 
-      <button
+      <Button
+        variant="danger"
         onClick={() => onDelete(collection._id)}
         disabled={loading}
-        style={{
-          padding: '8px 12px',
-          cursor: 'pointer',
-          background: '#ff4d4f',
-          color: 'white',
-          border: 'none',
-          borderRadius: '6px',
-        }}
       >
         {loading ? 'Deleting...' : 'Delete'}
-      </button>
-    </div>
+      </Button>
+    </Card>
   );
 };
