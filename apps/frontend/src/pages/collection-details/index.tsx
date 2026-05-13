@@ -17,7 +17,6 @@ export const CollectionPage = () => {
   const { id } = useParams<{ id: string }>();
 
   const { data: collection, isLoading } = useCollection(id ?? '');
-
   const { data: availablePokemons = [] } = usePokemonList();
 
   const exportMutation = useExportCollection();
@@ -26,15 +25,9 @@ export const CollectionPage = () => {
   const removePokemonMutation = useRemovePokemonFromCollection();
 
   const [editing, setEditing] = useState(false);
+  const [localName, setLocalName] = useState('');
 
-  const [name, setName] = useState(() => collection?.name ?? '');
-
-  const collectionName = collection?.name ?? '';
-  if (name === '' && collectionName) {
-    setName(collectionName);
-  }
-
-  const selected = useMemo<Pokemon[]>(
+  const selected: Pokemon[] = useMemo(
     () => collection?.pokemons ?? [],
     [collection],
   );
@@ -50,20 +43,22 @@ export const CollectionPage = () => {
   );
 
   const availableToAdd: PokemonDetails[] = availablePokemons.filter(
-    (p: PokemonDetails) => !selected.some((sp) => sp.id === p.id),
+    (p) => !selected.some((sp) => sp.id === p.id),
   );
+
+  const startEdit = () => {
+    setLocalName(collection?.name ?? '');
+    setEditing(true);
+  };
 
   const handleExport = async () => {
     if (!id || !collection) return;
 
     const response = await exportMutation.mutateAsync(id);
 
-    const blob = new Blob(
-      [JSON.stringify(response.data)],
-       {
-          type: 'application/json',
-       },
-    );
+    const blob = new Blob([JSON.stringify(response.data)], {
+      type: 'application/json',
+    });
 
     const url = window.URL.createObjectURL(blob);
 
@@ -81,8 +76,12 @@ export const CollectionPage = () => {
     await updateMutation.mutateAsync({
       id,
       data: {
-        name: name.trim(),
-        pokemons: selected,
+        name: localName.trim(),
+        pokemons: selected.map(({ id, name, weight }) => ({
+            id,
+            name,
+            weight,
+        }))
       },
     });
 
@@ -108,7 +107,6 @@ export const CollectionPage = () => {
         id: pokemon.id,
         name: pokemon.name,
         weight: pokemon.weight,
-        _id: '',
       },
       currentPokemons: selected,
     });
@@ -125,14 +123,17 @@ export const CollectionPage = () => {
       <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
         {editing ? (
           <>
-            <input value={name} onChange={(e) => setName(e.target.value)} />
+            <input
+              value={localName}
+              onChange={(e) => setLocalName(e.target.value)}
+            />
             <button onClick={() => void handleRename()}>Save</button>
             <button onClick={() => setEditing(false)}>Cancel</button>
           </>
         ) : (
           <>
             <h1>{collection.name}</h1>
-            <button onClick={() => setEditing(true)}>Rename</button>
+            <button onClick={startEdit}>Rename</button>
           </>
         )}
       </div>

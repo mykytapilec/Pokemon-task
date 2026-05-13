@@ -15,10 +15,13 @@ export class CollectionsService {
   ) {}
 
   async create(dto: CreateCollectionDto) {
-    const { totalWeight } = CollectionValidator.validate(dto.pokemons);
+    const { pokemons, totalWeight } = CollectionValidator.validate({
+      pokemons: dto.pokemons,
+    });
 
     return this.model.create({
       ...dto,
+      pokemons,
       totalWeight,
     });
   }
@@ -38,14 +41,14 @@ export class CollectionsService {
 
     const pokemons = dto.pokemons ?? existing.pokemons;
 
-    const { totalWeight } = CollectionValidator.validate(pokemons);
+    const validated = CollectionValidator.validate({ pokemons });
 
     return this.model.findByIdAndUpdate(
       id,
       {
         name: dto.name ?? existing.name,
-        pokemons,
-        totalWeight,
+        pokemons: validated.pokemons,
+        totalWeight: validated.totalWeight,
       },
       { new: true },
     );

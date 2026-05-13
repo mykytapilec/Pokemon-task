@@ -1,18 +1,35 @@
-export class CollectionValidator {
-  static validate(pokemons: { name: string; weight: number }[]) {
-    const species = new Set(pokemons.map((p) => p.name));
+type PokemonInput = {
+  id: number;
+  name: string;
+  weight: number;
+};
 
-    if (species.size < 3) {
-      throw new Error('At least 3 different Pokémon species required');
+type ValidateInput = {
+  pokemons: unknown;
+};
+
+export class CollectionValidator {
+  static validate(data: ValidateInput) {
+    const pokemonsRaw = data.pokemons;
+
+    if (!Array.isArray(pokemonsRaw)) {
+      throw new Error('pokemons must be array');
     }
+
+    const pokemons: PokemonInput[] = pokemonsRaw.map((p) => {
+      const item = p as PokemonInput;
+
+      return {
+        id: item.id,
+        name: item.name,
+        weight: item.weight,
+      };
+    });
 
     const totalWeight = pokemons.reduce((sum, p) => sum + p.weight, 0);
 
-    if (totalWeight > 1300) {
-      throw new Error('Total weight exceeds 1300 hectograms limit');
-    }
-
     return {
+      pokemons,
       totalWeight,
     };
   }
