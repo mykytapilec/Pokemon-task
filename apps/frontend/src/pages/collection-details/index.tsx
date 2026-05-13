@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 import {
@@ -6,7 +6,7 @@ import {
   useCollection,
   useExportCollection,
   useRemovePokemonFromCollection,
-  useUpdateCollection,
+  useRenameCollection,
 } from '../../shared/hooks/use-collections';
 
 import { usePokemonList } from '../../shared/hooks/use-pokemon';
@@ -20,14 +20,21 @@ export const CollectionPage = () => {
   const { data: availablePokemons = [] } = usePokemonList();
 
   const exportMutation = useExportCollection();
-  const updateMutation = useUpdateCollection();
+  const renameMutation = useRenameCollection();
   const addPokemonMutation = useAddPokemonToCollection();
   const removePokemonMutation = useRemovePokemonFromCollection();
 
   const [editing, setEditing] = useState(false);
-  const [localName, setLocalName] = useState('');
+  const [name, setName] = useState('');
 
-  const selected: Pokemon[] = useMemo(
+  // sync name safely
+  useEffect(() => {
+    if (collection?.name) {
+      setName(collection.name);
+    }
+  }, [collection?.name]);
+
+  const selected = useMemo<Pokemon[]>(
     () => collection?.pokemons ?? [],
     [collection],
   );
@@ -42,14 +49,9 @@ export const CollectionPage = () => {
     [selected],
   );
 
-  const availableToAdd: PokemonDetails[] = availablePokemons.filter(
-    (p) => !selected.some((sp) => sp.id === p.id),
+  const availableToAdd = availablePokemons.filter(
+    (p: PokemonDetails) => !selected.some((sp) => sp.id === p.id),
   );
-
-  const startEdit = () => {
-    setLocalName(collection?.name ?? '');
-    setEditing(true);
-  };
 
   const handleExport = async () => {
     if (!id || !collection) return;
@@ -61,8 +63,8 @@ export const CollectionPage = () => {
     });
 
     const url = window.URL.createObjectURL(blob);
-
     const a = document.createElement('a');
+
     a.href = url;
     a.download = `${collection.name}.json`;
     a.click();
@@ -70,36 +72,19 @@ export const CollectionPage = () => {
     window.URL.revokeObjectURL(url);
   };
 
-  const handleRename = async () => {
-    if (!id || !collection) return;
+  const handleRename = () => {
+    if (!id) return;
 
-    await updateMutation.mutateAsync({
+    renameMutation.mutate({
       id,
-      data: {
-        name: localName.trim(),
-        pokemons: selected.map(({ id, name, weight }) => ({
-            id,
-            name,
-            weight,
-        }))
-      },
+      name: name.trim(),
     });
 
     setEditing(false);
   };
 
-  const handleRemovePokemon = (pokemonId: number) => {
-    if (!id || !collection) return;
-
-    removePokemonMutation.mutate({
-      id,
-      pokemonId,
-      currentPokemons: selected,
-    });
-  };
-
   const handleAddPokemon = (pokemon: PokemonDetails) => {
-    if (!id || !collection) return;
+    if (!id) return;
 
     addPokemonMutation.mutate({
       id,
@@ -108,7 +93,15 @@ export const CollectionPage = () => {
         name: pokemon.name,
         weight: pokemon.weight,
       },
-      currentPokemons: selected,
+    });
+  };
+
+  const handleRemovePokemon = (pokemonId: number) => {
+    if (!id) return;
+
+    removePokemonMutation.mutate({
+      id,
+      pokemonId,
     });
   };
 
@@ -118,34 +111,29 @@ export const CollectionPage = () => {
 
   return (
     <div style={{ padding: '24px' }}>
-      <Link to="/">← Back to Home</Link>
+      <Link to="/">← Back</Link>
 
       <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
         {editing ? (
           <>
-            <input
-              value={localName}
-              onChange={(e) => setLocalName(e.target.value)}
-            />
-            <button onClick={() => void handleRename()}>Save</button>
+            <input value={name} onChange={(e) => setName(e.target.value)} />
+            <button onClick={handleRename}>Save</button>
             <button onClick={() => setEditing(false)}>Cancel</button>
           </>
         ) : (
           <>
             <h1>{collection.name}</h1>
-            <button onClick={startEdit}>Rename</button>
+            <button onClick={() => setEditing(true)}>Rename</button>
           </>
         )}
       </div>
 
-      <button onClick={() => void handleExport()}>
-        Download JSON
-      </button>
+      <button onClick={() => void handleExport()}>Export JSON</button>
 
       <p>Total Weight: {totalWeight}</p>
       <p>Unique Species: {uniqueSpeciesCount}</p>
 
-      <h2>Pokemons in Collection</h2>
+      <h2>Pokemons</h2>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
         {selected.map((p) => (
@@ -154,7 +142,7 @@ export const CollectionPage = () => {
               src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`}
             />
             <h4>{p.name}</h4>
-            <p>{p.weight} hg</p>
+            <p>{p.weight}</p>
 
             <button onClick={() => handleRemovePokemon(p.id)}>
               Remove
@@ -163,7 +151,7 @@ export const CollectionPage = () => {
         ))}
       </div>
 
-      <h2>Add More Pokemons</h2>
+      <h2>Add Pokemons</h2>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
         {availableToAdd.map((p) => (

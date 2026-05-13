@@ -28,6 +28,16 @@ export class CollectionValidator {
 
     const totalWeight = pokemons.reduce((sum, p) => sum + p.weight, 0);
 
+    if (totalWeight > 1300) {
+      throw new Error('total weight exceeds limit');
+    }
+
+    const uniqueSpeciesCount = new Set(pokemons.map((p) => p.name)).size;
+
+    if (uniqueSpeciesCount < 3) {
+      throw new Error('collection must contain at least 3 unique pokemon');
+    }
+
     return {
       pokemons,
       totalWeight,

@@ -7,7 +7,6 @@ import { useCreateCollection } from '../../shared/hooks/use-collections';
 import type { PokemonDetails } from '../../shared/types/pokemon';
 
 import { PokemonCard } from '../../components/pokemon-card';
-import { PokemonCardSkeleton } from '../../components/pokemon-card-skeleton';
 
 export const CreateCollectionPage = () => {
   const navigate = useNavigate();
@@ -65,7 +64,7 @@ export const CreateCollectionPage = () => {
 
   return (
     <div style={{ padding: '24px' }}>
-      <Link to="/">← Back to Home</Link>
+      <Link to="/">← Back</Link>
 
       <h1>Create Collection</h1>
 
@@ -75,20 +74,17 @@ export const CreateCollectionPage = () => {
         placeholder="Collection name"
       />
 
+      <p>Total Weight: {totalWeight}</p>
+      <p>Unique Species: {uniqueSpeciesCount}</p>
+
       <button onClick={() => void handleSave()} disabled={!isValid}>
-        Save Collection
+        Save
       </button>
 
-      {isLoading && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
-          {Array.from({ length: 8 }).map((_, i) => (
-            <PokemonCardSkeleton key={i} />
-          ))}
-        </div>
-      )}
+      {isLoading && <p>Loading...</p>}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
-        {pokemons.map((pokemon) => (
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+        {pokemons.map((pokemon: PokemonDetails) => (
           <PokemonCard
             key={pokemon.id}
             pokemon={pokemon}

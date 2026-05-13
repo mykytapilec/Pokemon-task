@@ -8,81 +8,44 @@ import type {
 
 export const collectionsApi = {
   getAll: async (): Promise<Collection[]> => {
-    const response =
-      await api.get<Collection[]>(
-        '/collections',
-      );
-
-    return response.data;
+    const res = await api.get<Collection[]>('/collections');
+    return res.data;
   },
 
-  getOne: async (
-    id: string,
-  ): Promise<Collection> => {
-    const response =
-      await api.get<Collection>(
-        `/collections/${id}`,
-      );
-
-    return response.data;
+  getOne: async (id: string): Promise<Collection> => {
+    const res = await api.get<Collection>(`/collections/${id}`);
+    return res.data;
   },
 
-  create: async (
-    data: CreateCollectionPayload,
-  ): Promise<Collection> => {
-    const response =
-      await api.post<Collection>(
-        '/collections',
-        data,
-      );
-
-    return response.data;
+  create: async (data: CreateCollectionPayload): Promise<Collection> => {
+    const res = await api.post<Collection>('/collections', data);
+    return res.data;
   },
 
   update: async (
     id: string,
     data: UpdateCollectionPayload,
   ): Promise<Collection> => {
-    const response =
-      await api.patch<Collection>(
-        `/collections/${id}`,
-        data,
-      );
-
-    return response.data;
+    const res = await api.patch<Collection>(`/collections/${id}`, data);
+    return res.data;
   },
 
-  remove: async (id: string) => {
-    return api.delete(
-      `/collections/${id}`,
-    );
+  remove: async (id: string): Promise<void> => {
+    await api.delete(`/collections/${id}`);
   },
 
-  importFile: async (
-    file: File,
-  ) => {
-    const formData =
-      new FormData();
+  importFile: async (file: File): Promise<void> => {
+    const formData = new FormData();
+    formData.append('file', file);
 
-    formData.append(
-      'file',
-      file,
-    );
-
-    return api.post(
-      '/collections/import',
-      formData,
-    );
+    await api.post('/collections/import', formData);
   },
 
-  exportFile: async (
-    id: string,
-  ) => {
-    return api.get(
-      `/collections/${id}/export`,
-      {
-        responseType: 'blob',
-      },
-    );
+  exportFile: async (id: string): Promise<Blob> => {
+    const res = await api.get<Blob>(`/collections/${id}/export`, {
+      responseType: 'blob',
+    });
+
+    return res.data;
   },
 };

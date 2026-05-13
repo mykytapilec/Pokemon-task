@@ -9,10 +9,10 @@ export interface Collection {
 
 export interface CreateCollectionPayload {
   name: string;
-  pokemons: Pokemon[];
+  pokemons: Omit<Pokemon, '_id'>[];
 }
 
 export interface UpdateCollectionPayload {
   name?: string;
-  pokemons?: Pokemon[];
+  pokemons?: Omit<Pokemon, '_id'>[];
 }

@@ -1,231 +1,177 @@
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query';
-
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { collectionsApi } from '../api/collections';
-import type { Collection } from '../types/collection';
-import type { Pokemon } from '../types/pokemon';
 
-/* ========================= */
+import type {
+  CreateCollectionPayload,
+  UpdateCollectionPayload,
+} from '../types/collection';
 
+type AddPokemonInput = {
+  id: string;
+  pokemon: {
+    id: number;
+    name: string;
+    weight: number;
+  };
+};
+
+type RemovePokemonInput = {
+  id: string;
+  pokemonId: number;
+};
+
+type RenameInput = {
+  id: string;
+  name: string;
+};
+
+// GET ALL
 export const useCollections = () =>
   useQuery({
     queryKey: ['collections'],
     queryFn: collectionsApi.getAll,
   });
 
-export const useCollection = (
-  id: string,
-) =>
+// GET ONE
+export const useCollection = (id: string) =>
   useQuery({
     queryKey: ['collection', id],
-    queryFn: () =>
-      collectionsApi.getOne(id),
+    queryFn: () => collectionsApi.getOne(id),
     enabled: !!id,
   });
 
+// CREATE
+export const useCreateCollection = () => {
+  const qc = useQueryClient();
 
-export const useCreateCollection =
-  () => {
-    const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CreateCollectionPayload) =>
+      collectionsApi.create(data),
 
-    return useMutation({
-      mutationFn:
-        collectionsApi.create,
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['collections'] });
+    },
+  });
+};
 
-      onSuccess: () => {
-        void qc.invalidateQueries({
-          queryKey: ['collections'],
-        });
-      },
-    });
-  };
+// DELETE
+export const useDeleteCollection = () => {
+  const qc = useQueryClient();
 
-export const useUpdateCollection =
-  () => {
-    const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => collectionsApi.remove(id),
 
-    return useMutation({
-      mutationFn: ({
-        id,
-        data,
-      }: {
-        id: string;
-        data: {
-          name?: string;
-          pokemons?: Pokemon[];
-        };
-      }) =>
-        collectionsApi.update(
-          id,
-          data,
-        ),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['collections'] });
+    },
+  });
+};
 
-      onMutate: async ({
-        id,
-        data,
-      }) => {
-        await qc.cancelQueries({
-          queryKey: [
-            'collection',
-            id,
-          ],
-        });
+// UPDATE (full replace)
+export const useUpdateCollection = () => {
+  const qc = useQueryClient();
 
-        const previous =
-          qc.getQueryData<Collection>([
-            'collection',
-            id,
-          ]);
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: UpdateCollectionPayload;
+    }) => collectionsApi.update(id, data),
 
-        qc.setQueryData<Collection>(
-          ['collection', id],
-          (old) => {
-            if (!old) {
-              return old;
-            }
+    onSuccess: (_, vars) => {
+      void qc.invalidateQueries({
+        queryKey: ['collection', vars.id],
+      });
 
-            return {
-              ...old,
-              ...data,
-            };
-          },
-        );
+      void qc.invalidateQueries({
+        queryKey: ['collections'],
+      });
+    },
+  });
+};
 
-        return { previous };
-      },
+// RENAME
+export const useRenameCollection = () => {
+  const qc = useQueryClient();
 
-      onError: (
-        _err,
-        vars,
-        ctx,
-      ) => {
-        if (ctx?.previous) {
-          qc.setQueryData(
-            ['collection', vars.id],
-            ctx.previous,
-          );
-        }
-      },
+  return useMutation({
+    mutationFn: ({ id, name }: RenameInput) =>
+      collectionsApi.update(id, { name }),
 
-      onSettled: (
-        _d,
-        _e,
-        vars,
-      ) => {
-        void qc.invalidateQueries({
-          queryKey: [
-            'collection',
-            vars.id,
-          ],
-        });
+    onSuccess: (_, vars) => {
+      void qc.invalidateQueries({
+        queryKey: ['collection', vars.id],
+      });
 
-        void qc.invalidateQueries({
-          queryKey: ['collections'],
-        });
-      },
-    });
-  };
+      void qc.invalidateQueries({
+        queryKey: ['collections'],
+      });
+    },
+  });
+};
 
-export const useDeleteCollection =
-  () => {
-    const qc = useQueryClient();
+// ADD POKEMON
+export const useAddPokemonToCollection = () => {
+  const qc = useQueryClient();
 
-    return useMutation({
-      mutationFn:
-        collectionsApi.remove,
+  return useMutation({
+    mutationFn: ({ id, pokemon }: AddPokemonInput) =>
+      collectionsApi.update(id, {
+        pokemons: [pokemon],
+      }),
 
-      onSuccess: () => {
-        void qc.invalidateQueries({
-          queryKey: ['collections'],
-        });
-      },
-    });
-  };
+    onSuccess: (_, vars) => {
+      void qc.invalidateQueries({
+        queryKey: ['collection', vars.id],
+      });
+    },
+  });
+};
 
-export const useImportCollection =
-  () => {
-    const qc = useQueryClient();
+// REMOVE POKEMON
+export const useRemovePokemonFromCollection = () => {
+  const qc = useQueryClient();
 
-    return useMutation({
-      mutationFn:
-        collectionsApi.importFile,
+  return useMutation({
+    mutationFn: async ({ id, pokemonId }: RemovePokemonInput) => {
+      const collection = await collectionsApi.getOne(id);
 
-      onSuccess: () => {
-        void qc.invalidateQueries({
-          queryKey: ['collections'],
-        });
-      },
-    });
-  };
+      const filtered = collection.pokemons.filter(
+        (p) => p.id !== pokemonId,
+      );
 
-export const useExportCollection =
-  () =>
-    useMutation({
-      mutationFn:
-        collectionsApi.exportFile,
-    });
+      return collectionsApi.update(id, {
+        pokemons: filtered,
+      });
+    },
 
-export const useAddPokemonToCollection =
-  () => {
-    const updateMutation =
-      useUpdateCollection();
+    onSuccess: (_, vars) => {
+      void qc.invalidateQueries({
+        queryKey: ['collection', vars.id],
+      });
+    },
+  });
+};
 
-    return useMutation({
-      mutationFn: async ({
-        id,
-        pokemon,
-        currentPokemons,
-      }: {
-        id: string;
-        pokemon: Pokemon;
-        currentPokemons: Pokemon[];
-      }) => {
-        return updateMutation.mutateAsync(
-          {
-            id,
-            data: {
-              pokemons: [
-                ...currentPokemons,
-                pokemon,
-              ],
-            },
-          },
-        );
-      },
-    });
-  };
+// EXPORT
+export const useExportCollection = () =>
+  useMutation({
+    mutationFn: (id: string) => collectionsApi.exportFile(id),
+  });
 
-export const useRemovePokemonFromCollection =
-  () => {
-    const updateMutation =
-      useUpdateCollection();
+// IMPORT
+export const useImportCollection = () => {
+  const qc = useQueryClient();
 
-    return useMutation({
-      mutationFn: async ({
-        id,
-        pokemonId,
-        currentPokemons,
-      }: {
-        id: string;
-        pokemonId: number;
-        currentPokemons: Pokemon[];
-      }) => {
-        return updateMutation.mutateAsync(
-          {
-            id,
-            data: {
-              pokemons:
-                currentPokemons.filter(
-                  (p) =>
-                    p.id !==
-                    pokemonId,
-                ),
-            },
-          },
-        );
-      },
-    });
-  };
+  return useMutation({
+    mutationFn: (file: File) => collectionsApi.importFile(file),
+
+    onSuccess: () => {
+      void qc.invalidateQueries({
+        queryKey: ['collections'],
+      });
+    },
+  });
+};
