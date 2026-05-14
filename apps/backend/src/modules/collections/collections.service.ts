@@ -14,7 +14,6 @@ export class CollectionsService {
     private readonly model: Model<CollectionDocument>,
   ) {}
 
-  // CREATE
   async create(dto: CreateCollectionDto) {
     const validated = CollectionValidator.validate({
       pokemons: dto.pokemons,
@@ -27,12 +26,10 @@ export class CollectionsService {
     });
   }
 
-  // GET ALL
   async findAll() {
     return this.model.find().exec();
   }
 
-  // GET ONE
   async findOne(id: string) {
     const collection = await this.model.findById(id).exec();
 
@@ -43,7 +40,6 @@ export class CollectionsService {
     return collection;
   }
 
-  // DELETE
   async delete(id: string) {
     const deleted = await this.model.findByIdAndDelete(id).exec();
 
@@ -54,7 +50,6 @@ export class CollectionsService {
     return deleted;
   }
 
-  // CLEAN REST UPDATE
   async update(id: string, dto: UpdateCollectionDto) {
     const collection = await this.model.findById(id).exec();
 
@@ -83,7 +78,6 @@ export class CollectionsService {
     return { ok: true };
   }
 
-  // EXPORT
   async export(id: string) {
     const collection = await this.model.findById(id).exec();
 

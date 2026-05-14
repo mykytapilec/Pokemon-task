@@ -26,14 +26,12 @@ type RenameInput = {
   name: string;
 };
 
-// GET ALL
 export const useCollections = () =>
   useQuery({
     queryKey: ['collections'],
     queryFn: collectionsApi.getAll,
   });
 
-// GET ONE
 export const useCollection = (id: string) =>
   useQuery({
     queryKey: ['collection', id],
@@ -41,7 +39,6 @@ export const useCollection = (id: string) =>
     enabled: !!id,
   });
 
-// CREATE
 export const useCreateCollection = () => {
   const qc = useQueryClient();
 
@@ -57,7 +54,6 @@ export const useCreateCollection = () => {
   });
 };
 
-// DELETE
 export const useDeleteCollection = () => {
   const qc = useQueryClient();
 
@@ -73,7 +69,6 @@ export const useDeleteCollection = () => {
   });
 };
 
-// UPDATE
 export const useUpdateCollection = () => {
   const qc = useQueryClient();
 
@@ -98,7 +93,6 @@ export const useUpdateCollection = () => {
   });
 };
 
-// RENAME
 export const useRenameCollection = () => {
   const qc = useQueryClient();
 
@@ -118,7 +112,6 @@ export const useRenameCollection = () => {
   });
 };
 
-// ADD POKEMON
 export const useAddPokemonToCollection = () => {
   const qc = useQueryClient();
 
@@ -150,7 +143,6 @@ export const useAddPokemonToCollection = () => {
   });
 };
 
-// REMOVE POKEMON
 export const useRemovePokemonFromCollection = () => {
   const qc = useQueryClient();
 
@@ -180,14 +172,12 @@ export const useRemovePokemonFromCollection = () => {
   });
 };
 
-// EXPORT
 export const useExportCollection = () =>
   useMutation({
     mutationFn: (id: string) =>
       collectionsApi.exportFile(id),
   });
 
-// IMPORT
 export const useImportCollection = () => {
   const qc = useQueryClient();
 
