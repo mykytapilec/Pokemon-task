@@ -50,7 +50,6 @@ export const collectionsApi = {
     return res.data;
   },
 
-  // ❌ REMOVE POKEMON (NEW CONTRACT)
   removePokemon: async (id: string, pokemonId: number): Promise<Collection> => {
     const res = await api.delete<Collection>(
       `/collections/${id}/pokemons/${pokemonId}`,
@@ -58,7 +57,6 @@ export const collectionsApi = {
     return res.data;
   },
 
-  // EXPORT
   exportFile: async (id: string): Promise<Blob> => {
     const res = await api.get<Blob>(`/collections/${id}/export`, {
       responseType: 'blob',
@@ -67,7 +65,6 @@ export const collectionsApi = {
     return res.data;
   },
 
-  // IMPORT 
   importFile: async (file: File): Promise<void> => {
     const formData = new FormData();
     formData.append('file', file);
